@@ -1,1 +1,531 @@
-<!DOCTYPE html><title>Climate Quest</title><p>Loading...</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Climate Quest: Save the Planet</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#0f2a3d; --bg2:#1d5c63; --card:#ffffff; --ink:#12303b; --muted:#5b7580;
+  --good:#22a85a; --bad:#e5484d; --gold:#ffc83d; --accent:#2fb8a1; --accent2:#ff8a3d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;}
+body{
+  font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;color:var(--ink);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed;
+  display:flex;justify-content:center;
+}
+#app{width:100%;max-width:760px;padding:14px 14px 40px;min-height:100vh}
+h1,h2,h3{margin:0}
+button{font-family:inherit;cursor:pointer}
+.topbar{display:flex;justify-content:space-between;align-items:center;color:#fff;margin-bottom:10px;gap:8px}
+.chip{background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-weight:600;font-size:15px;color:#fff;border:0}
+.card{background:var(--card);border-radius:22px;padding:20px;box-shadow:0 8px 0 rgba(0,0,0,.18)}
+.btn{background:var(--accent2);color:#fff;border:0;border-radius:16px;padding:14px 22px;font-size:20px;font-weight:700;box-shadow:0 5px 0 #c4631f;transition:transform .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #c4631f}
+.btn.green{background:var(--good);box-shadow:0 5px 0 #17773f}
+.btn.green:active{box-shadow:0 1px 0 #17773f}
+.btn.ghost{background:transparent;color:#fff;box-shadow:none;border:2px solid rgba(255,255,255,.5);font-size:16px;padding:8px 14px}
+.center{text-align:center}
+.hidden{display:none!important}
+
+/* Title */
+.title-wrap{color:#fff;text-align:center;padding-top:18px}
+.logo{font-size:64px;animation:bob 3s ease-in-out infinite}
+.title-wrap h1{font-size:44px;line-height:1.05;margin:6px 0 4px;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+.title-wrap p.sub{opacity:.85;margin:0 0 18px;font-size:18px}
+.title-card{color:var(--ink);text-align:left}
+.title-card label{font-weight:600;font-size:16px;display:block;margin:6px 0}
+.title-card input{width:100%;font:inherit;font-size:20px;padding:12px 14px;border:3px solid #d5e4e8;border-radius:14px;outline:none}
+.title-card input:focus{border-color:var(--accent)}
+.heroes{display:flex;gap:10px;margin:8px 0 16px}
+.hero-pick{flex:1;font-size:38px;background:#eef6f7;border:3px solid transparent;border-radius:16px;padding:8px 0}
+.hero-pick.on{border-color:var(--accent);background:#dff5f1;transform:scale(1.05)}
+.foot{color:rgba(255,255,255,.65);font-size:13px;text-align:center;margin-top:18px}
+.foot a,.linkbtn{color:#fff;opacity:.8;text-decoration:underline;background:none;border:0;font-size:13px}
+
+/* Map */
+.map-head{color:#fff;text-align:center;margin:6px 0 14px}
+.map-head h2{font-size:28px}
+.xpbar{height:14px;background:rgba(255,255,255,.2);border-radius:999px;overflow:hidden;margin-top:6px}
+.xpbar>i{display:block;height:100%;background:var(--gold);width:0;transition:width .6s}
+.stages{display:grid;gap:12px}
+.stage{display:flex;align-items:center;gap:14px;background:#fff;border-radius:20px;padding:14px 16px;border:0;text-align:left;width:100%;box-shadow:0 6px 0 rgba(0,0,0,.18);color:var(--ink);transition:transform .1s}
+.stage:not(.locked):active{transform:translateY(3px)}
+.stage .em{font-size:44px;width:64px;height:64px;border-radius:16px;display:grid;place-items:center;flex:none}
+.stage .tx{flex:1;min-width:0}
+.stage .tx b{font-size:20px;display:block}
+.stage .tx span{font-size:14px;color:var(--muted)}
+.stage .st{font-size:22px;letter-spacing:2px;white-space:nowrap}
+.stage.locked{opacity:.5;filter:grayscale(.8)}
+.stage.boss{border:4px solid var(--gold)}
+
+/* Battle */
+.arena{border-radius:22px;padding:16px;color:#fff;position:relative;overflow:hidden;box-shadow:0 8px 0 rgba(0,0,0,.18);min-height:210px}
+.arena .row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px}
+.sprite{font-size:76px;line-height:1;display:inline-block;filter:drop-shadow(0 6px 0 rgba(0,0,0,.25))}
+.enemy .sprite{font-size:92px;animation:wobble 2.4s ease-in-out infinite}
+.hero .sprite{animation:bob 2.2s ease-in-out infinite}
+.ename{font-weight:700;font-size:18px}
+.hpbar{height:16px;background:rgba(0,0,0,.3);border-radius:999px;overflow:hidden;margin-top:6px;border:2px solid rgba(255,255,255,.5)}
+.hpbar>i{display:block;height:100%;background:linear-gradient(90deg,#ff5a5f,#ff9a5a);transition:width .4s}
+.hearts{font-size:26px;letter-spacing:2px}
+.combo{position:absolute;top:12px;right:14px;background:var(--gold);color:#5a3b00;font-weight:700;padding:4px 12px;border-radius:999px;opacity:0;transform:scale(.6);transition:all .2s}
+.combo.on{opacity:1;transform:scale(1)}
+.fx{position:absolute;font-size:46px;pointer-events:none;opacity:0}
+.fx.shoot{animation:shoot .55s ease-out}
+.hit .sprite{animation:shake .4s}
+.hurt{animation:shake .4s}
+.qcard{margin-top:14px}
+.qtext{font-size:25px;font-weight:600;line-height:1.3;margin:0 0 4px}
+.qsub{color:var(--muted);font-size:16px;margin-bottom:12px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media (max-width:520px){.opts{grid-template-columns:1fr}.qtext{font-size:22px}}
+.opt{background:#eef6f7;border:3px solid #cfe2e6;border-radius:16px;padding:16px 12px;font-size:21px;font-weight:600;color:var(--ink);box-shadow:0 4px 0 #cfe2e6;min-height:62px;transition:transform .08s}
+.opt:active{transform:translateY(3px)}
+.opt.ok{background:#d7f5e3;border-color:var(--good);box-shadow:0 4px 0 var(--good)}
+.opt.no{background:#fde0e1;border-color:var(--bad);box-shadow:0 4px 0 var(--bad)}
+.opt:disabled{cursor:default}
+.fb{margin-top:12px;padding:12px 14px;border-radius:14px;font-size:18px;font-weight:600}
+.fb.ok{background:#d7f5e3;color:#14683a}
+.fb.no{background:#fde0e1;color:#9a2328}
+
+/* Result */
+.res{text-align:center}
+.res .big{font-size:70px}
+.res h2{font-size:34px;margin:4px 0}
+.stars{font-size:46px;letter-spacing:6px;margin:6px 0}
+.stat{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
+.stat span{background:#eef6f7;border-radius:12px;padding:6px 12px;font-weight:600}
+.missed{text-align:left;background:#fff6e5;border-radius:16px;padding:12px 16px;margin:12px 0}
+.missed h3{font-size:18px;margin-bottom:6px}
+.missed li{margin:4px 0;font-size:17px}
+.btnrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.lvl{background:var(--gold);color:#5a3b00;border-radius:14px;padding:8px 12px;font-weight:700;margin:8px 0;display:inline-block}
+
+.codebox{background:#fff8dc;border:3px dashed var(--gold);border-radius:16px;padding:12px;margin:14px 0;text-align:center}
+.codelab{font-weight:700;font-size:14px;color:#7a5600}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:24px;font-weight:700;letter-spacing:1px;margin:8px 0;word-break:break-all;user-select:all;-webkit-user-select:all}
+.codehelp{font-size:13px;color:var(--muted);margin-top:6px}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9}
+.confetti i{position:absolute;top:-40px;font-style:normal;font-size:30px;animation:fall linear forwards}
+
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-6px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(6px)}}
+@keyframes shoot{0%{opacity:1;transform:translate(0,0) scale(.8)}100%{opacity:0;transform:translate(var(--dx,200px),var(--dy,-20px)) scale(1.6)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const app = document.getElementById("app");
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+let save = { name: "", hero: "🦸", stars: {}, xp: 0, mute: false };
+try { const s = JSON.parse(localStorage.getItem("climateQuestM2U6") || "null"); if (s) save = Object.assign(save, s); } catch (e) {}
+function persist() { try { localStorage.setItem("climateQuestM2U6", JSON.stringify(save)); } catch (e) {} }
+
+/* ---------- sound (tiny beeps, safe if blocked) ---------- */
+let actx = null;
+function tone(freq, dur, type, vol, delay) {
+  if (save.mute) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime + (delay || 0);
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "square"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol || 0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+const sfx = {
+  good: () => { tone(660, .1); tone(880, .15, "square", .06, .09); },
+  bad: () => { tone(180, .25, "sawtooth", .07); },
+  win: () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, .18, "square", .06, i * .12)); },
+  lose: () => { [330, 262, 196].forEach((f, i) => tone(f, .25, "sawtooth", .06, i * .18)); },
+  tap: () => tone(440, .05, "triangle", .05)
+};
+
+/* ---------- vocabulary data: [word, thai, definition, words-not-to-use-as-wrong-answers] ---------- */
+const LAND = [
+  ["beach","An area of sand next to the sea",["coast"]],
+  ["cave","A big hole in the side of a hill or cliff",[]],
+  ["cliff","A very high, steep side of land, often next to the sea",["mountain","hill"]],
+  ["coast","The land that is next to the sea",["beach"]],
+  ["desert","A very dry area with almost no rain",[]],
+  ["forest","A large area covered with trees",["rainforest"]],
+  ["hill","An area of land that is higher than the land around it, but not very high",["mountain","mountain range"]],
+  ["island","A piece of land with water all around it",[]],
+  ["rainforest","A hot, wet forest with a lot of rain",["forest"]],
+  ["mountain","A very, very high piece of land",["hill","mountain range","cliff"]],
+  ["mountain range","A long line of mountains",["mountain"]],
+  ["valley","A low area of land between two hills or mountains",[]]
+];
+const WATER = [
+  ["glacier","A huge, slow river of ice",[]],
+  ["lake","A big area of water with land all around it",["ocean"]],
+  ["ocean","A very big area of salt water",["lake"]],
+  ["river","A long, wide flow of water that goes to the sea",["stream"]],
+  ["stream","A small, narrow flow of water",["river"]],
+  ["waterfall","Water that falls down from a high place",[]]
+];
+const ENV = [
+  ["climate change","The weather patterns of the Earth change over many years",["global warming"]],
+  ["drought","A very long time with no rain",[]],
+  ["flood","Too much water covers dry land",[]],
+  ["global warming","The Earth's temperature is going up",["climate change"]],
+  ["sea level rise","The sea is getting higher",["melting ice caps"]],
+  ["melting ice caps","Ice at the North and South Poles is turning into water",["sea level rise"]],
+  ["carbon emissions","Gases from cars and factories that go into the air",["pollution"]],
+  ["fossil fuels","Oil, coal and gas",["renewable energy"]],
+  ["renewable energy","Energy from the sun, the wind or water",["fossil fuels"]],
+  ["pollution","Dirty air, water or land",["toxic waste","carbon emissions"]],
+  ["toxic waste","Dangerous chemical rubbish",["pollution"]]
+];
+
+function vocabQs(list) {
+  const all = list.map(e => e[0]);
+  return list.map(([w, def, no]) => ({
+    q: def, sub: "What is it?", a: w,
+    wrong: shuffle(all.filter(x => x !== w && !no.includes(x))).slice(0, 3),
+    why: w, word: w
+  }));
+}
+
+/* ---------- stage builders ---------- */
+function buildLand() { return vocabQs(LAND); }
+function buildWater() {
+  return vocabQs(WATER).concat([
+    { q: "Which one is a WATER feature?", sub: "", a: "glacier", wrong: ["cliff","cave","valley"], why: "A glacier is a water (ice) feature." },
+    { q: "Which one is a LAND feature?", sub: "", a: "desert", wrong: ["lake","stream","waterfall"], why: "A desert is a land feature." },
+    { q: "Which one is a WATER feature?", sub: "", a: "waterfall", wrong: ["hill","beach","forest"], why: "A waterfall is a water feature." }
+  ]);
+}
+function buildEnv() { return vocabQs(ENV); }
+function buildVerbs() {
+  const V = [
+    ["Please ____ plastic bottles. Don't put them in the trash.", "recycle", ["waste","consume","throw away"], "recycle = turn old things into new things"],
+    ["Turn off the tap to ____ water.", "save", ["waste","consume","throw away"], "save = use less, don't waste"],
+    ["Don't ____ food. Eat everything on your plate!", "waste", ["recycle","save","reduce"], "waste = use more than you need"],
+    ["You can ____ old jars to keep your pencils in.", "reuse", ["consume","waste","throw away"], "reuse = use again"],
+    ["We should ____ the amount of plastic we use.", "reduce", ["waste","consume","throw away"], "reduce = make smaller, use less"],
+    ["People in rich countries ____ a lot of energy every day.", "consume", ["recycle","save","reuse"], "consume = use up"],
+    ["Don't ____ rubbish on the beach! Use the bin.", "throw away", ["recycle","reuse","save"], "throw away = put in the trash"],
+    ["If we ____ our rubbish, factories can make new things from it.", "recycle", ["waste","consume","throw away"], "recycle = turn old things into new things"]
+  ];
+  return V.map(([q, a, wrong, why]) => ({ q, sub: "Choose the best verb.", a, wrong, why }));
+}
+function buildGet() {
+  const M = ["arrive","bring","become","buy","receive","understand","move into a position"];
+  const G = [
+    ["I get to school at 7:30 every day.", "arrive", ["buy","receive","understand"], "get = arrive"],
+    ["Can you get my bag from the car, please?", "bring", ["become","understand","arrive"], "get = bring"],
+    ["It's getting dark. Turn on the light.", "become", ["buy","bring","receive"], "get = become"],
+    ["I'm going to get a new bike at the shop.", "buy", ["arrive","understand","become"], "get = buy / obtain"],
+    ["I got a present from my best friend.", "receive", ["arrive","become","understand"], "get = receive"],
+    ["I don't get this joke. Can you explain it?", "understand", ["buy","arrive","receive"], "get = understand"],
+    ["Get into the car. We're late!", "move into a position", ["buy","receive","understand"], "get into = move into a position"],
+    ["The weather is getting hotter every year.", "become", ["arrive","bring","buy"], "get = become"],
+    ["What time do we get to the beach?", "arrive", ["bring","become","receive"], "get = arrive"]
+  ];
+  return G.map(([q, a, wrong, why]) => ({ q: q, sub: "What does GET mean here?", a, wrong, why }));
+}
+function buildFuture() {
+  return [
+    { q: "\"I can't open the door.\"  \"Don't worry, I ____ you.\"", sub: "A decision at the moment of speaking", a: "'ll help", wrong: ["helped","'m helped","helps"], why: "Sudden decision → will. I'll help you." },
+    { q: "Look at those black clouds! It ____ rain.", sub: "You can SEE the evidence now", a: "is going to", wrong: ["rains","was going to","goes to"], why: "Prediction from evidence → be going to." },
+    { q: "My brother has decided. He ____ study science.", sub: "A plan already decided", a: "is going to", wrong: ["studied","going","are going to"], why: "A plan already decided → be going to." },
+    { q: "Next month, it ____ winter.", sub: "A fact", a: "will be", wrong: ["was","were","is been"], why: "A fact about the future → will. It will be winter." },
+    { q: "Scientists think temperatures ____.", sub: "A general prediction", a: "will rise", wrong: ["rose","rising","rises up"], why: "General prediction → will. Temperatures will rise." },
+    { q: "The class ____ a forest next Friday. The bus is booked!", sub: "A confirmed arrangement", a: "is visiting", wrong: ["visited","visits to","visit"], why: "Arrangement → present continuous. The class is visiting a forest." },
+    { q: "\"The sentence 'We're going to plant more trees this year' shows ...\"", sub: "", a: "a plan", wrong: ["a sudden decision","a fact","a past event"], why: "be going to = a plan or intention." },
+    { q: "\"I'm meeting my friend at the cinema at 6 o'clock.\" This is ...", sub: "", a: "an arrangement", wrong: ["a fact","a past habit","a prediction from evidence"], why: "Present continuous for future = arrangement." }
+  ];
+}
+function buildBoss() {
+  return [
+    { q: "The sun ____ rise tomorrow. (100% sure)", sub: "Certainty", a: "will definitely", wrong: ["might","may probably","definitely will"], why: "100% sure → will definitely." },
+    { q: "Sea levels ____ rise. (70–80% sure)", sub: "Certainty", a: "will probably", wrong: ["will definitely","probably will","might not"], why: "Quite sure → will probably." },
+    { q: "I'm not sure. It ____ rain later.", sub: "Certainty (about 50%)", a: "might", wrong: ["will definitely","definitely","is going"], why: "Not sure → may / might." },
+    { q: "Which sentence is the MOST certain?", sub: "", a: "It will definitely rain.", wrong: ["It might rain.","It may rain.","It will probably rain."], why: "will definitely = almost 100% sure." },
+    { q: "I ____ be late. I promise! (100% sure NOT)", sub: "Word order", a: "definitely won't", wrong: ["won't definitely","definitely will","may be"], why: "definitely goes BEFORE won't: I definitely won't be late." },
+    { q: "If you heat ice, it ____.", sub: "Always true (zero conditional)", a: "melts", wrong: ["will melting","melted","is melt"], why: "Zero conditional: If + present, present." },
+    { q: "If it rains tomorrow, we ____ stay inside.", sub: "A possible future (first conditional)", a: "will", wrong: ["would","are","stayed"], why: "First conditional: If + present, will + verb." },
+    { q: "If you mix blue and yellow, you ____ green.", sub: "Always true", a: "get", wrong: ["will got","getting","would to get"], why: "Zero conditional: If you mix blue and yellow, you get green." },
+    { q: "If we plant more trees, the air ____ cleaner.", sub: "A possible future", a: "will be", wrong: ["was","be","is been"], why: "First conditional: If we plant more trees, the air will be cleaner." },
+    { q: "Which sentence is ALWAYS true?", sub: "", a: "If you touch fire, you burn yourself.", wrong: ["If it rains tomorrow, we will go home.","If I win, I will celebrate.","If she studies, she will pass."], why: "Always true → zero conditional (present + present)." },
+    { q: "If it doesn't rain soon, the plants ____.", sub: "A possible future", a: "will die", wrong: ["died","dying","dies out"], why: "First conditional: If it doesn't rain soon, the plants will die." },
+    { q: "If you heat water to 100°C, it ____.", sub: "Always true", a: "boils", wrong: ["will boiling","boiled","boil to"], why: "Zero conditional: If you heat water to 100°C, it boils." }
+  ];
+}
+
+const STAGES = [
+  { id: "coast",  name: "Sunny Coast",      topic: "Land features",              enemy: "Litter Blob",   foe: "🗑️", bg: "linear-gradient(160deg,#2aa6c9,#79d6c1)", tile: "#d9f3f8", ic: "🏖️", count: 6, build: buildLand },
+  { id: "river",  name: "Rushing River",    topic: "Water features",             enemy: "Sludge Serpent",foe: "🐍", bg: "linear-gradient(160deg,#2f6fd0,#46b9d8)", tile: "#dbe8fb", ic: "🌊", count: 6, build: buildWater },
+  { id: "smog",   name: "Smog City",        topic: "Environmental problems",     enemy: "Smog Dragon",   foe: "🐲", bg: "linear-gradient(160deg,#5b5f6e,#8c8d9a)", tile: "#e6e6ec", ic: "🏭", count: 7, build: buildEnv },
+  { id: "ruins",  name: "Recycle Ruins",    topic: "Environment verbs",          enemy: "Trash Golem",   foe: "🗿", bg: "linear-gradient(160deg,#3f8f4f,#9bcf6b)", tile: "#e1f3dc", ic: "♻️", count: 6, build: buildVerbs },
+  { id: "gorge",  name: "Get Gorge",        topic: "7 meanings of GET",          enemy: "Gorge Goblin",  foe: "👺", bg: "linear-gradient(160deg,#8a5a2b,#d9a05b)", tile: "#f6e8d3", ic: "⛰️", count: 6, build: buildGet },
+  { id: "future", name: "Future Forest",    topic: "will / going to / continuous",enemy: "Time Wraith",   foe: "👻", bg: "linear-gradient(160deg,#4b3a8f,#8b6fd6)", tile: "#e8e2f8", ic: "🌲", count: 6, build: buildFuture },
+  { id: "boss",   name: "Carbon King's Castle", topic: "BOSS: certainty + conditionals", enemy: "THE CARBON KING", foe: "👹", bg: "linear-gradient(160deg,#6b1d1d,#c4452f)", tile: "#fbe0da", ic: "🏰", count: 9, boss: true, build: buildBoss }
+];
+
+const TITLES = [[0,"Litter Picker"],[60,"Eco Scout"],[150,"Green Ranger"],[280,"Earth Knight"],[450,"Planet Guardian"],[650,"Climate Hero"]];
+function levelInfo(xp) {
+  let i = 0; for (let k = 0; k < TITLES.length; k++) if (xp >= TITLES[k][0]) i = k;
+  const cur = TITLES[i][0], nxt = TITLES[i + 1] ? TITLES[i + 1][0] : null;
+  return { lvl: i + 1, title: TITLES[i][1], pct: nxt ? Math.round((xp - cur) / (nxt - cur) * 100) : 100, nxt };
+}
+
+/* ---------- score code ---------- */
+function scoreCode() {
+  const stars = STAGES.map(x => save.stars[x.id] || 0).join("");
+  const nm = (save.name || "HERO").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || "HERO";
+  const base = nm + "-" + stars + "-" + save.xp;
+  let h = 7; for (const c of base) h = (h * 31 + c.charCodeAt(0)) % 46656;
+  return base + "-" + h.toString(36).toUpperCase().padStart(3, "0");
+}
+function codeBlock() {
+  return `<div class="codebox"><div class="codelab">📋 MY SCORE CODE — send this to your teacher</div>
+    <div class="code" id="codeTxt">${scoreCode()}</div>
+    <button class="btn green" id="copyCode" style="font-size:18px;padding:10px 18px">Copy code</button>
+    <div class="codehelp">Paste it into the Google Classroom assignment.</div></div>`;
+}
+function bindCode() {
+  const b = document.getElementById("copyCode"); if (!b) return;
+  b.onclick = () => {
+    sfx.tap();
+    const t = scoreCode();
+    let done = false;
+    try { navigator.clipboard.writeText(t).then(() => { b.textContent = "✔ Copied!"; }, () => { b.textContent = "Press and hold the code to copy"; }); done = true; } catch (e) {}
+    if (!done) b.textContent = "Press and hold the code to copy";
+    try { const r = document.createRange(); r.selectNodeContents(document.getElementById("codeTxt")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch (e) {}
+  };
+}
+
+/* ---------- screens ---------- */
+function topbar(backBtn) {
+  const L = levelInfo(save.xp);
+  return `<div class="topbar">
+    ${backBtn ? `<button class="chip" id="backBtn">⬅ Map</button>` : `<span class="chip">${esc(save.hero)} ${esc(save.name || "Hero")}</span>`}
+    <span class="chip">⭐ Lv ${L.lvl} · ${L.xp !== undefined ? "" : ""}${save.xp} XP</span>
+    <button class="chip" id="muteBtn">${save.mute ? "🔇" : "🔊"}</button>
+  </div>`;
+}
+function bindTop() {
+  const m = document.getElementById("muteBtn");
+  if (m) m.onclick = () => { save.mute = !save.mute; persist(); m.textContent = save.mute ? "🔇" : "🔊"; sfx.tap(); };
+  const b = document.getElementById("backBtn");
+  if (b) b.onclick = () => { sfx.tap(); showMap(); };
+}
+
+function showTitle() {
+  app.innerHTML = `
+  <div class="title-wrap">
+    <div class="logo">🌍</div>
+    <h1>CLIMATE QUEST</h1>
+    <p class="sub">Defeat the Carbon King. Save the planet!</p>
+    <div class="card title-card">
+      <label for="nm">Hero name</label>
+      <input id="nm" maxlength="16" placeholder="Your name (English letters)" value="${esc(save.name)}">
+      <label style="margin-top:12px">Choose your hero</label>
+      <div class="heroes">
+        ${["🦸","🧙","🥷","🧝"].map(h => `<button class="hero-pick ${h === save.hero ? "on" : ""}" data-h="${h}">${h}</button>`).join("")}
+      </div>
+      <div class="center"><button class="btn" id="go">▶ START QUEST</button></div>
+    </div>
+    <div class="foot">English Basic · M2 · Unit 6: Changing Climates<br>
+    <button class="linkbtn" id="reset">Reset my progress</button></div>
+  </div>`;
+  document.querySelectorAll(".hero-pick").forEach(b => b.onclick = () => {
+    save.hero = b.dataset.h; sfx.tap();
+    document.querySelectorAll(".hero-pick").forEach(x => x.classList.toggle("on", x === b));
+  });
+  document.getElementById("go").onclick = () => {
+    save.name = (document.getElementById("nm").value || "Hero").trim().slice(0, 16) || "Hero";
+    persist(); sfx.good(); showMap();
+  };
+  document.getElementById("reset").onclick = () => {
+    if (document.getElementById("reset").dataset.sure) { save = { name: "", hero: "🦸", stars: {}, xp: 0, mute: save.mute }; persist(); showTitle(); }
+    else { const r = document.getElementById("reset"); r.dataset.sure = 1; r.textContent = "Tap again to erase everything"; }
+  };
+}
+
+function showMap() {
+  const L = levelInfo(save.xp);
+  const unlocked = i => i === 0 || (save.stars[STAGES[i - 1].id] || 0) > 0;
+  app.innerHTML = topbar(false) + `
+  <div class="map-head">
+    <h2>${esc(save.hero)} ${esc(L.title)}</h2>
+    <div class="xpbar"><i style="width:${L.pct}%"></i></div>
+  </div>
+  <div class="stages">
+    ${STAGES.map((s, i) => {
+      const st = save.stars[s.id] || 0, open = unlocked(i);
+      return `<button class="stage ${open ? "" : "locked"} ${s.boss ? "boss" : ""}" data-i="${i}" ${open ? "" : "disabled"}>
+        <div class="em" style="background:${s.tile}">${open ? s.ic : "🔒"}</div>
+        <div class="tx"><b>${i + 1}. ${s.name}</b><span>${s.topic}</span></div>
+        <div class="st">${st ? "⭐".repeat(st) + "<span style='opacity:.25'>" + "⭐".repeat(3 - st) + "</span>" : (open ? "" : "")}</div>
+      </button>`;
+    }).join("")}
+  </div>
+  <div style="margin-top:16px" class="card">${codeBlock()}</div>
+  <div class="foot"><button class="linkbtn" id="toTitle">Change name / hero</button></div>`;
+  bindTop(); bindCode();
+  document.querySelectorAll(".stage:not(.locked)").forEach(b => b.onclick = () => { sfx.tap(); startBattle(+b.dataset.i); });
+  document.getElementById("toTitle").onclick = showTitle;
+}
+
+/* ---------- battle ---------- */
+let B = null;
+const prep = q => Object.assign({}, q, { opts: shuffle([q.a].concat(q.wrong)) });
+
+function startBattle(i) {
+  const st = STAGES[i];
+  const picked = shuffle(st.build()).slice(0, st.count).map(prep);
+  B = { i, st, queue: picked, hp: picked.length, max: picked.length, hearts: 3, lost: 0, streak: 0, best: 0, correct: 0, missed: [], xpGain: 0, locked: false };
+  renderBattle();
+}
+
+function heartsStr() { return "❤️".repeat(B.hearts) + "🖤".repeat(3 - B.hearts); }
+
+function renderBattle() {
+  const q = B.queue[0], st = B.st;
+  app.innerHTML = topbar(true) + `
+  <div class="arena" id="arena" style="background:${st.bg}">
+    <div class="combo" id="combo">🔥 COMBO x${B.streak}</div>
+    <div class="enemy" id="enemy">
+      <div class="ename">${st.boss ? "👑 " : ""}${st.enemy}</div>
+      <div class="hpbar"><i id="hpfill" style="width:${B.hp / B.max * 100}%"></i></div>
+      <div class="center"><span class="sprite" id="foe">${st.foe}</span></div>
+    </div>
+    <div class="row">
+      <div class="hero"><span class="sprite" id="me">${esc(save.hero)}</span></div>
+      <div class="hearts" id="hearts">${heartsStr()}</div>
+    </div>
+    <span class="fx" id="fx">💥</span>
+  </div>
+  <div class="card qcard">
+    <p class="qtext">${esc(q.q)}</p>
+    <div class="qsub">${esc(q.sub || "")}</div>
+    <div class="opts" id="opts">
+      ${q.opts.map((o, k) => `<button class="opt" data-o="${k}">${esc(o)}</button>`).join("")}
+    </div>
+    <div id="fb"></div>
+  </div>`;
+  bindTop();
+  B.locked = false;
+  document.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(b));
+}
+
+function shootFx(ok) {
+  const fx = document.getElementById("fx"), arena = document.getElementById("arena");
+  const me = document.getElementById("me").getBoundingClientRect(), foe = document.getElementById("foe").getBoundingClientRect(), ar = arena.getBoundingClientRect();
+  const from = ok ? me : foe, to = ok ? foe : me;
+  fx.textContent = ok ? "⚡" : "💢";
+  fx.style.left = (from.left - ar.left + from.width / 2 - 20) + "px";
+  fx.style.top = (from.top - ar.top + from.height / 2 - 20) + "px";
+  fx.style.setProperty("--dx", (to.left - from.left) + "px");
+  fx.style.setProperty("--dy", (to.top - from.top) + "px");
+  fx.classList.remove("shoot"); void fx.offsetWidth; fx.classList.add("shoot");
+  const t = document.getElementById(ok ? "enemy" : "me");
+  t.classList.remove("hit", "hurt"); void t.offsetWidth; t.classList.add(ok ? "hit" : "hurt");
+}
+
+function answer(btn) {
+  if (B.locked) return;
+  B.locked = true;
+  const q = B.queue[0], pick = q.opts[+btn.dataset.o], ok = pick === q.a;
+  document.querySelectorAll(".opt").forEach(b => {
+    b.disabled = true;
+    if (q.opts[+b.dataset.o] === q.a) b.classList.add("ok");
+  });
+  const fb = document.getElementById("fb");
+  if (ok) {
+    B.hp--; B.streak++; B.correct++; B.best = Math.max(B.best, B.streak);
+    B.xpGain += 10 + (B.streak >= 3 ? 5 : 0);
+    B.queue.shift();
+    sfx.good(); shootFx(true);
+    document.getElementById("hpfill").style.width = (B.hp / B.max * 100) + "%";
+    const c = document.getElementById("combo"); c.textContent = "🔥 COMBO x" + B.streak; c.classList.toggle("on", B.streak >= 2);
+    fb.innerHTML = `<div class="fb ok">✔ Direct hit! ${esc(q.why || "")}</div>`;
+    setTimeout(() => { B.hp <= 0 ? endBattle(true) : renderBattle(); }, B.hp <= 0 ? 900 : 1300);
+  } else {
+    btn.classList.add("no");
+    B.hearts--; B.lost++; B.streak = 0;
+    if (!B.missed.some(m => m.q === q.q)) B.missed.push(q);
+    B.queue.push(prep(B.queue.shift()));
+    sfx.bad(); shootFx(false);
+    document.getElementById("hearts").textContent = heartsStr();
+    document.getElementById("combo").classList.remove("on");
+    fb.innerHTML = `<div class="fb no">✘ Ouch! The answer is “${esc(q.a)}”. ${esc(q.why || "")}</div>
+      <div class="center" style="margin-top:12px"><button class="btn green" id="nx">${B.hearts <= 0 ? "Continue" : "Next ▶"}</button></div>`;
+    document.getElementById("nx").onclick = () => { sfx.tap(); B.hearts <= 0 ? endBattle(false) : renderBattle(); };
+  }
+}
+
+function confetti() {
+  const box = document.createElement("div"); box.className = "confetti";
+  const bits = ["🌍","🌱","⭐","🌳","♻️","💧","🎉","☀️"];
+  for (let i = 0; i < 36; i++) {
+    const e = document.createElement("i");
+    e.textContent = bits[i % bits.length];
+    e.style.left = Math.random() * 100 + "vw";
+    e.style.animationDuration = (2.2 + Math.random() * 2) + "s";
+    e.style.animationDelay = (Math.random() * .8) + "s";
+    box.appendChild(e);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 5500);
+}
+
+function endBattle(won) {
+  const st = B.st;
+  const before = levelInfo(save.xp).lvl;
+  let stars = 0;
+  if (won) {
+    stars = B.lost === 0 ? 3 : B.lost === 1 ? 2 : 1;
+    save.stars[st.id] = Math.max(save.stars[st.id] || 0, stars);
+    save.xp += B.xpGain + stars * 10;
+  } else {
+    save.xp += Math.round(B.xpGain / 2);
+  }
+  persist();
+  const L = levelInfo(save.xp), leveled = L.lvl > before;
+  won ? sfx.win() : sfx.lose();
+  if (won && (st.boss || leveled)) confetti();
+  const next = STAGES[B.i + 1];
+  const finalWin = won && st.boss;
+  app.innerHTML = topbar(false) + `
+  <div class="card res">
+    <div class="big">${won ? (finalWin ? "🏆" : "🎉") : "💀"}</div>
+    <h2>${won ? (finalWin ? "THE PLANET IS SAVED!" : "Enemy defeated!") : "You were defeated!"}</h2>
+    <div>${won ? esc(st.enemy) + " is gone." : esc(st.enemy) + " is too strong... for now."}</div>
+    ${won ? `<div class="stars">${"⭐".repeat(stars)}<span style="opacity:.2">${"⭐".repeat(3 - stars)}</span></div>` : ""}
+    <div class="stat"><span>✔ ${B.correct} correct</span><span>🔥 best combo ${B.best}</span><span>+${won ? B.xpGain + stars * 10 : Math.round(B.xpGain / 2)} XP</span></div>
+    ${leveled ? `<div class="lvl">⬆ LEVEL UP! You are now a ${esc(L.title)}</div>` : ""}
+    ${finalWin ? `<p style="font-size:19px">${esc(save.name)}, you beat the Carbon King. If we reduce, reuse and recycle, the planet will be cleaner!</p>` : ""}
+    ${B.missed.length ? `<div class="missed"><h3>📖 Review these:</h3><ul>${B.missed.map(m => `<li><b>${esc(m.a)}</b> <br><small>${esc(m.why || "")}</small></li>`).join("")}</ul></div>` : (won ? `<p>🌟 Perfect battle: no mistakes!</p>` : "")}
+    ${won ? codeBlock() : ""}
+    <div class="btnrow">
+      ${won && next ? `<button class="btn green" id="nextStage">Next: ${esc(next.name)} ▶</button>` : ""}
+      <button class="btn" id="again">${won ? "Play again" : "Try again"}</button>
+      <button class="btn ghost" style="color:var(--ink);border-color:#bcd" id="toMap">Map</button>
+    </div>
+  </div>`;
+  bindTop(); bindCode();
+  document.getElementById("again").onclick = () => { sfx.tap(); startBattle(B.i); };
+  document.getElementById("toMap").onclick = () => { sfx.tap(); showMap(); };
+  const ns = document.getElementById("nextStage"); if (ns) ns.onclick = () => { sfx.tap(); startBattle(B.i + 1); };
+}
+
+/* go */
+save.name ? showMap() : showTitle();
+</script>
+</body>
+</html>
