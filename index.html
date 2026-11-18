@@ -128,9 +128,11 @@ const app = document.getElementById("app");
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
-let save = { name: "", hero: "🦸", stars: {}, xp: 0, mute: false };
-try { const s = JSON.parse(localStorage.getItem("climateQuestM2U6") || "null"); if (s) save = Object.assign(save, s); } catch (e) {}
-function persist() { try { localStorage.setItem("climateQuestM2U6", JSON.stringify(save)); } catch (e) {} }
+let save = { name: "", hero: "🦸", stars: {}, xp: 0, mute: false, unlocked: {} };
+try { const s = JSON.parse(localStorage.getItem("climateQuestM2U6v2") || "null"); if (s) save = Object.assign(save, s); } catch (e) {}
+if (!save.unlocked) save.unlocked = {};
+const hashWord = w => { let x = 5381; for (const c of String(w).trim().toUpperCase()) x = ((x << 5) + x + c.charCodeAt(0)) >>> 0; return x; };
+function persist() { try { localStorage.setItem("climateQuestM2U6v2", JSON.stringify(save)); } catch (e) {} }
 
 /* ---------- sound (tiny beeps, safe if blocked) ---------- */
 let actx = null;
@@ -249,31 +251,45 @@ function buildFuture() {
     { q: "\"I'm meeting my friend at the cinema at 6 o'clock.\" This is ...", sub: "", a: "an arrangement", wrong: ["a fact","a past habit","a prediction from evidence"], why: "Present continuous for future = arrangement." }
   ];
 }
-function buildBoss() {
+function buildCertainty() {
   return [
     { q: "The sun ____ rise tomorrow. (100% sure)", sub: "Certainty", a: "will definitely", wrong: ["might","may probably","definitely will"], why: "100% sure → will definitely." },
     { q: "Sea levels ____ rise. (70–80% sure)", sub: "Certainty", a: "will probably", wrong: ["will definitely","probably will","might not"], why: "Quite sure → will probably." },
     { q: "I'm not sure. It ____ rain later.", sub: "Certainty (about 50%)", a: "might", wrong: ["will definitely","definitely","is going"], why: "Not sure → may / might." },
     { q: "Which sentence is the MOST certain?", sub: "", a: "It will definitely rain.", wrong: ["It might rain.","It may rain.","It will probably rain."], why: "will definitely = almost 100% sure." },
     { q: "I ____ be late. I promise! (100% sure NOT)", sub: "Word order", a: "definitely won't", wrong: ["won't definitely","definitely will","may be"], why: "definitely goes BEFORE won't: I definitely won't be late." },
+    { q: "Which sentence is the LEAST certain?", sub: "", a: "We might go to the beach.", wrong: ["We will definitely go to the beach.","We will probably go to the beach.","We will go to the beach."], why: "might = not sure (about 50%)." },
+    { q: "Next week, we ____ visit the forest. (quite sure, 70–80%)", sub: "Certainty", a: "will probably", wrong: ["might not","definitely","probably will"], why: "will probably = quite sure." },
+    { q: "She ____ come to the party, but I'm not sure.", sub: "Certainty (about 50%)", a: "may", wrong: ["will definitely","definitely will","won't definitely"], why: "may = not sure." }
+  ];
+}
+function buildCond() {
+  return [
     { q: "If you heat ice, it ____.", sub: "Always true (zero conditional)", a: "melts", wrong: ["will melting","melted","is melt"], why: "Zero conditional: If + present, present." },
     { q: "If it rains tomorrow, we ____ stay inside.", sub: "A possible future (first conditional)", a: "will", wrong: ["would","are","stayed"], why: "First conditional: If + present, will + verb." },
     { q: "If you mix blue and yellow, you ____ green.", sub: "Always true", a: "get", wrong: ["will got","getting","would to get"], why: "Zero conditional: If you mix blue and yellow, you get green." },
     { q: "If we plant more trees, the air ____ cleaner.", sub: "A possible future", a: "will be", wrong: ["was","be","is been"], why: "First conditional: If we plant more trees, the air will be cleaner." },
     { q: "Which sentence is ALWAYS true?", sub: "", a: "If you touch fire, you burn yourself.", wrong: ["If it rains tomorrow, we will go home.","If I win, I will celebrate.","If she studies, she will pass."], why: "Always true → zero conditional (present + present)." },
     { q: "If it doesn't rain soon, the plants ____.", sub: "A possible future", a: "will die", wrong: ["died","dying","dies out"], why: "First conditional: If it doesn't rain soon, the plants will die." },
-    { q: "If you heat water to 100°C, it ____.", sub: "Always true", a: "boils", wrong: ["will boiling","boiled","boil to"], why: "Zero conditional: If you heat water to 100°C, it boils." }
+    { q: "If you heat water to 100°C, it ____.", sub: "Always true", a: "boils", wrong: ["will boiling","boiled","boil to"], why: "Zero conditional: If you heat water to 100°C, it boils." },
+    { q: "Which sentence is about a POSSIBLE future?", sub: "", a: "If we recycle more, we will have less waste.", wrong: ["If you heat ice, it melts.","If you mix red and white, you get pink.","If water gets cold enough, it freezes."], why: "Possible future → first conditional (If + present, will + verb)." }
   ];
 }
+function buildBoss() {
+  return buildLand().concat(buildWater(), buildEnv(), buildVerbs(), buildGet(), buildFuture(), buildCertainty(), buildCond());
+}
+function buildL1() { return buildLand().concat(buildWater()); }
+function buildL2() { return buildEnv().concat(buildVerbs()); }
 
+/* Each level = one lesson. `lock` = hash of the teacher's code word (level 1 has none). */
 const STAGES = [
-  { id: "coast",  name: "Sunny Coast",      topic: "Land features",              enemy: "Litter Blob",   foe: "🗑️", bg: "linear-gradient(160deg,#2aa6c9,#79d6c1)", tile: "#d9f3f8", ic: "🏖️", count: 6, build: buildLand },
-  { id: "river",  name: "Rushing River",    topic: "Water features",             enemy: "Sludge Serpent",foe: "🐍", bg: "linear-gradient(160deg,#2f6fd0,#46b9d8)", tile: "#dbe8fb", ic: "🌊", count: 6, build: buildWater },
-  { id: "smog",   name: "Smog City",        topic: "Environmental problems",     enemy: "Smog Dragon",   foe: "🐲", bg: "linear-gradient(160deg,#5b5f6e,#8c8d9a)", tile: "#e6e6ec", ic: "🏭", count: 7, build: buildEnv },
-  { id: "ruins",  name: "Recycle Ruins",    topic: "Environment verbs",          enemy: "Trash Golem",   foe: "🗿", bg: "linear-gradient(160deg,#3f8f4f,#9bcf6b)", tile: "#e1f3dc", ic: "♻️", count: 6, build: buildVerbs },
-  { id: "gorge",  name: "Get Gorge",        topic: "7 meanings of GET",          enemy: "Gorge Goblin",  foe: "👺", bg: "linear-gradient(160deg,#8a5a2b,#d9a05b)", tile: "#f6e8d3", ic: "⛰️", count: 6, build: buildGet },
-  { id: "future", name: "Future Forest",    topic: "will / going to / continuous",enemy: "Time Wraith",   foe: "👻", bg: "linear-gradient(160deg,#4b3a8f,#8b6fd6)", tile: "#e8e2f8", ic: "🌲", count: 6, build: buildFuture },
-  { id: "boss",   name: "Carbon King's Castle", topic: "BOSS: certainty + conditionals", enemy: "THE CARBON KING", foe: "👹", bg: "linear-gradient(160deg,#6b1d1d,#c4452f)", tile: "#fbe0da", ic: "🏰", count: 9, boss: true, build: buildBoss }
+  { id: "l1", name: "Sunny Coast",   topic: "Lesson 6.1 · Land & water features",   enemy: "Litter Blob",  foe: "🗑️", bg: "linear-gradient(160deg,#2aa6c9,#79d6c1)", tile: "#d9f3f8", ic: "🏖️", count: 7, build: buildL1 },
+  { id: "l2", name: "Smog City",     topic: "Lesson 6.2 · Environment words & verbs", enemy: "Smog Dragon",  foe: "🐲", bg: "linear-gradient(160deg,#5b5f6e,#8c8d9a)", tile: "#e6e6ec", ic: "🏭", count: 8, build: buildL2, lock: 227891415 },
+  { id: "l3", name: "Get Gorge",     topic: "Lesson 6.3 · 7 meanings of GET",        enemy: "Gorge Goblin", foe: "👺", bg: "linear-gradient(160deg,#8a5a2b,#d9a05b)", tile: "#f6e8d3", ic: "⛰️", count: 6, build: buildGet, lock: 231449065 },
+  { id: "l4", name: "Future Forest", topic: "Lesson 6.4 · will / going to / continuous", enemy: "Time Wraith", foe: "👻", bg: "linear-gradient(160deg,#4b3a8f,#8b6fd6)", tile: "#e8e2f8", ic: "🌲", count: 6, build: buildFuture, lock: 3437338061 },
+  { id: "l5", name: "Maybe Mountain", topic: "Lesson 6.5 · will / may / might", enemy: "Doubt Bat", foe: "🦇", bg: "linear-gradient(160deg,#2f6f6b,#6fbfa8)", tile: "#dcf2ec", ic: "🏔️", count: 6, build: buildCertainty, lock: 236472672 },
+  { id: "l6", name: "Iffy Volcano",  topic: "Lesson 6.6 · Zero & first conditional", enemy: "Iffy Imp", foe: "😈", bg: "linear-gradient(160deg,#a8451f,#f08a4b)", tile: "#fbe6d8", ic: "🌋", count: 6, build: buildCond, lock: 2892924416 },
+  { id: "boss", name: "Carbon King's Castle", topic: "BOSS · the whole unit", enemy: "THE CARBON KING", foe: "👹", bg: "linear-gradient(160deg,#6b1d1d,#c4452f)", tile: "#fbe0da", ic: "🏰", count: 10, boss: true, build: buildBoss, lock: 3215114880 }
 ];
 
 const TITLES = [[0,"Litter Picker"],[60,"Eco Scout"],[150,"Green Ranger"],[280,"Earth Knight"],[450,"Planet Guardian"],[650,"Climate Hero"]];
@@ -340,7 +356,7 @@ function showTitle() {
       </div>
       <div class="center"><button class="btn" id="go">▶ START QUEST</button></div>
     </div>
-    <div class="foot">English Basic · M2 · Unit 6: Changing Climates<br>
+    <div class="foot">English Basic · M2 · Unit 6: Changing Climates · 6 levels + boss<br>
     <button class="linkbtn" id="reset">Reset my progress</button></div>
   </div>`;
   document.querySelectorAll(".hero-pick").forEach(b => b.onclick = () => {
@@ -352,14 +368,15 @@ function showTitle() {
     persist(); sfx.good(); showMap();
   };
   document.getElementById("reset").onclick = () => {
-    if (document.getElementById("reset").dataset.sure) { save = { name: "", hero: "🦸", stars: {}, xp: 0, mute: save.mute }; persist(); showTitle(); }
+    if (document.getElementById("reset").dataset.sure) { save = { name: "", hero: "🦸", stars: {}, xp: 0, mute: save.mute, unlocked: {} }; persist(); showTitle(); }
     else { const r = document.getElementById("reset"); r.dataset.sure = 1; r.textContent = "Tap again to erase everything"; }
   };
 }
 
+const isOpen = i => !STAGES[i].lock || !!save.unlocked[STAGES[i].id];
+
 function showMap() {
   const L = levelInfo(save.xp);
-  const unlocked = i => i === 0 || (save.stars[STAGES[i - 1].id] || 0) > 0;
   app.innerHTML = topbar(false) + `
   <div class="map-head">
     <h2>${esc(save.hero)} ${esc(L.title)}</h2>
@@ -367,19 +384,48 @@ function showMap() {
   </div>
   <div class="stages">
     ${STAGES.map((s, i) => {
-      const st = save.stars[s.id] || 0, open = unlocked(i);
-      return `<button class="stage ${open ? "" : "locked"} ${s.boss ? "boss" : ""}" data-i="${i}" ${open ? "" : "disabled"}>
+      const st = save.stars[s.id] || 0, open = isOpen(i);
+      return `<button class="stage ${open ? "" : "locked"} ${s.boss ? "boss" : ""}" data-i="${i}">
         <div class="em" style="background:${s.tile}">${open ? s.ic : "🔒"}</div>
-        <div class="tx"><b>${i + 1}. ${s.name}</b><span>${s.topic}</span></div>
-        <div class="st">${st ? "⭐".repeat(st) + "<span style='opacity:.25'>" + "⭐".repeat(3 - st) + "</span>" : (open ? "" : "")}</div>
+        <div class="tx"><b>${s.boss ? "" : (i + 1) + ". "}${s.name}</b><span>${open ? s.topic : "Locked · ask your teacher for the code word"}</span></div>
+        <div class="st">${st ? "⭐".repeat(st) + "<span style='opacity:.25'>" + "⭐".repeat(3 - st) + "</span>" : ""}</div>
       </button>`;
     }).join("")}
   </div>
   <div style="margin-top:16px" class="card">${codeBlock()}</div>
   <div class="foot"><button class="linkbtn" id="toTitle">Change name / hero</button></div>`;
   bindTop(); bindCode();
-  document.querySelectorAll(".stage:not(.locked)").forEach(b => b.onclick = () => { sfx.tap(); startBattle(+b.dataset.i); });
+  document.querySelectorAll(".stage").forEach(b => b.onclick = () => {
+    sfx.tap(); const i = +b.dataset.i;
+    isOpen(i) ? startBattle(i) : showUnlock(i);
+  });
   document.getElementById("toTitle").onclick = showTitle;
+}
+
+function showUnlock(i) {
+  const s = STAGES[i];
+  app.innerHTML = topbar(true) + `
+  <div class="card center">
+    <div style="font-size:64px">🔒</div>
+    <h2 style="margin:6px 0">${s.boss ? "" : "Level " + (i + 1) + ": "}${s.name}</h2>
+    <p style="font-size:18px;color:var(--muted);margin:6px 0 14px">This level opens after your teacher finishes the lesson.<br>Type the <b>code word</b> from the lesson slides.</p>
+    <input id="cw" autocomplete="off" autocapitalize="characters" maxlength="20" placeholder="CODE WORD"
+      style="width:100%;max-width:340px;font:inherit;font-size:26px;text-align:center;text-transform:uppercase;letter-spacing:3px;padding:12px;border:3px solid #d5e4e8;border-radius:14px;outline:none">
+    <div id="cwmsg" style="min-height:28px;margin:10px 0;font-weight:600;color:var(--bad)"></div>
+    <button class="btn green" id="cwgo">🔓 UNLOCK</button>
+  </div>`;
+  bindTop();
+  const inp = document.getElementById("cw"), msg = document.getElementById("cwmsg");
+  const tryIt = () => {
+    if (hashWord(inp.value) === s.lock) {
+      save.unlocked[s.id] = true; persist(); sfx.win(); confetti(); startBattle(i);
+    } else {
+      sfx.bad(); msg.textContent = "Not the right code word. Check the slide or ask your teacher!";
+      inp.classList.remove("hurt"); void inp.offsetWidth; inp.classList.add("hurt");
+    }
+  };
+  document.getElementById("cwgo").onclick = tryIt;
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") tryIt(); });
 }
 
 /* ---------- battle ---------- */
@@ -513,7 +559,8 @@ function endBattle(won) {
     ${B.missed.length ? `<div class="missed"><h3>📖 Review these:</h3><ul>${B.missed.map(m => `<li><b>${esc(m.a)}</b> <br><small>${esc(m.why || "")}</small></li>`).join("")}</ul></div>` : (won ? `<p>🌟 Perfect battle: no mistakes!</p>` : "")}
     ${won ? codeBlock() : ""}
     <div class="btnrow">
-      ${won && next ? `<button class="btn green" id="nextStage">Next: ${esc(next.name)} ▶</button>` : ""}
+      ${won && next && isOpen(B.i + 1) ? `<button class="btn green" id="nextStage">Next: ${esc(next.name)} ▶</button>` : ""}
+      ${won && next && !isOpen(B.i + 1) ? `<div style="width:100%;font-weight:600;color:#7a5600">🔒 The next level opens when your teacher gives you the code word.</div>` : ""}
       <button class="btn" id="again">${won ? "Play again" : "Try again"}</button>
       <button class="btn ghost" style="color:var(--ink);border-color:#bcd" id="toMap">Map</button>
     </div>
